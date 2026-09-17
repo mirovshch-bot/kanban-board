@@ -1,0 +1,362 @@
+/* ===== Table view ===== */
+.table-wrap {
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
+  overflow: auto;
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.task-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  padding: 12px 14px;
+  background: rgba(20, 22, 38, 0.75);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid var(--glass-border-soft);
+  user-select: none;
+}
+
+.task-table thead th.sortable {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.task-table thead th.sortable:hover {
+  color: var(--text-dim);
+}
+
+.task-table thead th.active {
+  color: var(--text);
+}
+
+.task-table thead th:first-child {
+  border-top-left-radius: 16px;
+}
+
+.task-table thead th:last-child {
+  border-top-right-radius: 16px;
+}
+
+.th-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-icon {
+  opacity: 0;
+  transform: rotate(0deg);
+  transition: opacity 0.15s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.task-table thead th.sortable:hover .sort-icon {
+  opacity: 0.4;
+}
+
+.task-table thead th.active .sort-icon {
+  opacity: 1;
+  color: #a78bfa;
+}
+
+.sort-icon.desc {
+  transform: rotate(180deg);
+}
+
+.task-row {
+  transition: background 0.15s ease;
+}
+
+.task-row:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.task-table td {
+  padding: 12px 14px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--glass-border-soft);
+  color: var(--text);
+}
+
+.task-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.task-row-title {
+  font-weight: 500;
+  line-height: 1.4;
+  display: inline-block;
+  max-width: 380px;
+}
+
+/* Status badge в таблице */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--glass-border-soft);
+  white-space: nowrap;
+}
+
+.status-badge .column-dot {
+  width: 7px;
+  height: 7px;
+}
+
+/* Список тегов в ячейке */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.muted {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+/* Actions */
+.col-actions {
+  width: 44px;
+  text-align: right;
+}
+
+.row-action {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  opacity: 0;
+}
+
+.task-row:hover .row-action {
+  opacity: 1;
+}
+
+.row-action:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--glass-border-soft);
+}
+
+/* Ширины колонок */
+.col-title    { min-width: 240px; }
+.col-status   { width: 130px; }
+.col-priority { width: 130px; }
+.col-tags     { min-width: 180px; }
+.col-date     { width: 110px; white-space: nowrap; }
+
+/* ===== Filter button in header ===== */
+.th-filter-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.th-filter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.th-filter:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--glass-border-soft);
+}
+
+.th-filter.active {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.th-filter-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: #a78bfa;
+  color: #1a1d2e;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(167, 139, 250, 0.5);
+}
+
+/* ===== Filter dropdown menu ===== */
+.filter-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  max-width: 260px;
+  z-index: 20;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(20, 22, 38, 0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border-soft);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.filter-menu-title {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-faint);
+}
+
+.filter-menu-empty {
+  padding: 10px;
+  font-size: 12px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.filter-menu-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.filter-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.filter-item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.filter-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.filter-item input:checked + .filter-checkbox {
+  background: linear-gradient(135deg, #a78bfa, #22d3ee);
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.45);
+}
+
+.filter-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-menu-footer {
+  padding: 6px 4px 2px;
+  border-top: 1px solid var(--glass-border-soft);
+  margin-top: 4px;
+}
+
+.filter-clear {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.filter-clear:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+/* Подсветка активных тегов в ячейках */
+.tag.tag-highlight {
+  background: rgba(167, 139, 250, 0.25);
+  border-color: rgba(167, 139, 250, 0.45);
+  color: var(--text);
+}
+
+/* Пустое состояние таблицы */
+.table-empty {
+  padding: 40px 20px !important;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 13px;
+}

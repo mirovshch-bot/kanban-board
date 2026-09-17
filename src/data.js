@@ -179,3 +179,111 @@ export const EMPTY_FILTERS = {
   priorities: [],  // [] = все
   tags: [],        // [] = все
 };
+
+/**
+ * Форматирование ISO-даты в короткий вид: '2026-09-20' → '20 Sep'.
+ * Если передать null/undefined — вернёт '—'.
+ */
+const MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+export const formatDate = (iso) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+};
+
+/**
+ * Порядок статусов для сортировки в таблице.
+ */
+const STATUS_ORDER = { pool: 0, todo: 1, progress: 2, done: 3 };
+
+/**
+ * Универсальный сортировщик.
+ * sortBy: 'title' | 'status' | 'priority' | 'createdAt' | 'dueDate' | null
+ * sortDir: 'asc' | 'desc'
+ */
+export const sortTasks = (tasks, sortBy, sortDir) => {
+  if (!sortBy) return tasks;
+
+  const dir = sortDir === 'desc' ? -1 : 1;
+  const copy = [...tasks];
+
+  copy.sort((a, b) => {
+    let va, vb;
+
+    switch (sortBy) {
+      case 'title':
+        return a.title.localeCompare(b.title, 'ru') * dir;
+
+      case 'status':
+        va = STATUS_ORDER[a.status] ?? 99;
+        vb = STATUS_ORDER[b.status] ?? 99;
+        return (va - vb) * dir;
+
+      case 'priority':
+        va = PRIORITY_BY_ID[a.priority]?.weight ?? -1;
+        vb = PRIORITY_BY_ID[b.priority]?.weight ?? -1;
+        return (va - vb) * dir;
+
+      case 'createdAt':
+        va = new Date(a.createdAt).getTime();
+        vb = new Date(b.createdAt).getTime();
+        return (va - vb) * dir;
+
+      case 'dueDate': {
+        // Задачи без даты всегда в конце, независимо от направления
+        const aHas = !!a.dueDate;
+        const bHas = !!b.dueDate;
+        if (!aHas && !bHas) return 0;
+        if (!aHas) return 1;
+        if (!bHas) return -1;
+        va = new Date(a.dueDate).getTime();
+        vb = new Date(b.dueDate).getTime();
+        return (va - vb) * dir;
+      }
+
+      default:
+        return 0;
+    }
+  });
+
+  return copy;
+};
+
+/**
+ * Собирает уникальный список всех тегов из массива задач.
+ * Отсортирован по алфавиту.
+ */
+export const collectAllTags = (tasks) => {
+  const set = new Set();
+  tasks.forEach((t) => {
+    (t.tags || []).forEach((tag) => set.add(tag));
+  });
+  return [...set].sort((a, b) => a.localeCompare(b, 'ru'));
+};
+
+/**
+ * Применяет фильтры к массиву задач.
+ * filters: { search, statuses, priorities, tags }
+ * Пустые массивы = фильтр не активен.
+ * Логика:
+ *  - search — по title, регистронезависимо
+ *  - statuses / priorities — задача подходит, если её значение в списке
+ *  - tags — задача подходит, если у неё есть хотя бы один из выбранных тегов (OR)
+ */
+export const applyFilters = (tasks, filters) => {
+  const { search, statuses, priorities, tags } = filters;
+  const q = search.trim().toLowerCase();
+
+  return tasks.filter((task) => {
+    if (q && !task.title.toLowerCase().includes(q)) return false;
+    if (statuses.length && !statuses.includes(task.status)) return false;
+    if (priorities.length && !priorities.includes(task.priority)) return false;
+    if (tags.length && !task.tags?.some((tag) => tags.includes(tag))) return false;
+    return true;
+  });
+};
