@@ -137,6 +137,7 @@ const TaskTable = ({
   onToggleStatus,
   onTogglePriority,
   onToggleTag,
+  onOpenTask,
 }) => {
   const [sortBy, setSortBy] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
@@ -269,7 +270,11 @@ const TaskTable = ({
             const status = STATUS_BY_ID[task.status];
             const priority = PRIORITY_BY_ID[task.priority];
             return (
-              <tr key={task.id} className="task-row">
+              <tr
+                key={task.id}
+                className="task-row task-row-clickable"
+                onClick={() => onOpenTask?.(task)}
+              >
                 <td className="col-title">
                   <span className="task-row-title">{task.title}</span>
                 </td>

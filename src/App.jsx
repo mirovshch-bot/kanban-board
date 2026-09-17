@@ -11,12 +11,14 @@ import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import KanbanBoard from './components/KanbanBoard';
 import TaskTable from './components/TaskTable';
+import TaskModal from './components/TaskModal';
 
 const App = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mode, setMode] = useState('kanban');
   const [tasks, setTasks] = useState(initialTasks);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [editingTask, setEditingTask] = useState(null);
 
   const addTask = ({ title, status, priority, tags }) => {
     const newTask = createTask({ title, status, priority, tags });
@@ -46,6 +48,24 @@ const App = () => {
       return [...without.slice(0, idx), updated, ...without.slice(idx)];
     });
   };
+
+  const updateTask = (taskId, patch) => {
+    const now = new Date().toISOString();
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, ...patch, updatedAt: now } : t))
+    );
+    setEditingTask((prev) =>
+      prev && prev.id === taskId ? { ...prev, ...patch, updatedAt: now } : prev
+    );
+  };
+
+  const deleteTask = (taskId) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setEditingTask(null);
+  };
+
+  const openTask = (task) => setEditingTask(task);
+  const closeTask = () => setEditingTask(null);
 
   const toggleFilterValue = (field, value) => {
     setFilters((prev) => {
@@ -104,6 +124,7 @@ const App = () => {
             tasks={filteredTasks}
             onAddTask={addTask}
             onMoveTask={moveTask}
+            onOpenTask={openTask}
           />
         )}
 
@@ -115,9 +136,19 @@ const App = () => {
             onToggleStatus={toggleStatus}
             onTogglePriority={togglePriority}
             onToggleTag={toggleTag}
+            onOpenTask={openTask}
           />
         )}
       </main>
+
+      {editingTask && (
+        <TaskModal
+          task={editingTask}
+          onClose={closeTask}
+          onUpdate={updateTask}
+          onDelete={deleteTask}
+        />
+      )}
     </div>
   );
 };

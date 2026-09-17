@@ -7,7 +7,7 @@ import {
 import { PRIORITIES, TAGS } from '../data';
 import TaskCard from './TaskCard';
 
-const Column = ({ status, tasks, onAddTask }) => {
+const Column = ({ status, tasks, onAddTask, onOpenTask }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState('med');
@@ -146,7 +146,7 @@ const Column = ({ status, tasks, onAddTask }) => {
       <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
         <div className="cards">
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
+            <TaskCard key={task.id} task={task} onOpen={onOpenTask} />
           ))}
         </div>
       </SortableContext>

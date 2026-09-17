@@ -12,7 +12,7 @@ import { STATUSES } from '../data';
 import Column from './Column';
 import TaskCard from './TaskCard';
 
-const KanbanBoard = ({ tasks, onAddTask, onMoveTask }) => {
+const KanbanBoard = ({ tasks, onAddTask, onMoveTask, onOpenTask }) => {
   const [activeTask, setActiveTask] = useState(null);
 
   const sensors = useSensors(
@@ -75,6 +75,7 @@ const KanbanBoard = ({ tasks, onAddTask, onMoveTask }) => {
             status={status}
             tasks={tasks.filter((t) => t.status === status.id)}
             onAddTask={onAddTask}
+            onOpenTask={onOpenTask}
           />
         ))}
       </div>

@@ -2,11 +2,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PRIORITY_BY_ID } from '../data';
 
-const TaskCard = ({ task, overlay = false }) => {
+const TaskCard = ({ task, overlay = false, onOpen }) => {
   const priority = PRIORITY_BY_ID[task.priority];
 
-  // Хук sortable нельзя вызывать условно.
-  // Для overlay-версии карточки вызываем тоже, но игнорируем результат.
   const sortable = useSortable({ id: task.id, disabled: overlay });
   const {
     attributes,
@@ -32,11 +30,21 @@ const TaskCard = ({ task, overlay = false }) => {
     .filter(Boolean)
     .join(' ');
 
+  const handleClick = (e) => {
+    if (overlay || isDragging) return;
+    if (!onOpen) return;
+    // Не открываем, если был выделен текст
+    if (window.getSelection()?.toString()) return;
+    e.stopPropagation();
+    onOpen(task);
+  };
+
   return (
     <article
       ref={overlay ? undefined : setNodeRef}
       style={style}
       className={className}
+      onClick={handleClick}
       {...(overlay ? {} : attributes)}
       {...(overlay ? {} : listeners)}
     >
