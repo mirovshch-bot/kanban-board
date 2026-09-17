@@ -1,16 +1,18 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import {
+  STATUSES,
+  PRIORITIES,
   STATUS_BY_ID,
   PRIORITY_BY_ID,
   formatDate,
   sortTasks,
-  } from '../data';
+} from '../data';
 
 const COLUMNS = [
   { key: 'title',     label: 'Title',    className: 'col-title',    sortable: true },
-  { key: 'status',    label: 'Status',   className: 'col-status',   sortable: true },
-  { key: 'priority',  label: 'Priority', className: 'col-priority', sortable: true },
-  { key: 'tags',      label: 'Tags',     className: 'col-tags',     sortable: false, filterable: true },
+  { key: 'status',    label: 'Status',   className: 'col-status',   sortable: true, filterable: 'status' },
+  { key: 'priority',  label: 'Priority', className: 'col-priority', sortable: true, filterable: 'priority' },
+  { key: 'tags',      label: 'Tags',     className: 'col-tags',     sortable: false, filterable: 'tag' },
   { key: 'createdAt', label: 'Created',  className: 'col-date',     sortable: true },
   { key: 'dueDate',   label: 'Due',      className: 'col-date',     sortable: true },
   { key: 'actions',   label: '',         className: 'col-actions',  sortable: false },
@@ -47,15 +49,16 @@ const FilterIcon = () => (
   </svg>
 );
 
-const TagsFilterMenu = ({ allTags, selectedTags, onToggleTag, onClose }) => {
+/**
+ * Универсальное меню фильтра.
+ * options: [{ value, label, color? }]
+ */
+const FilterMenu = ({ title, options, selected, onToggle, onClose }) => {
   const menuRef = useRef(null);
 
-  // Закрытие по клику мимо и по Esc
   useEffect(() => {
     const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        onClose();
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) onClose();
     };
     const handleKey = (e) => {
       if (e.key === 'Escape') onClose();
@@ -70,19 +73,19 @@ const TagsFilterMenu = ({ allTags, selectedTags, onToggleTag, onClose }) => {
 
   return (
     <div className="filter-menu" ref={menuRef}>
-      <div className="filter-menu-title">Filter by tag</div>
-      {allTags.length === 0 ? (
-        <div className="filter-menu-empty">No tags yet</div>
+      <div className="filter-menu-title">{title}</div>
+      {options.length === 0 ? (
+        <div className="filter-menu-empty">No options</div>
       ) : (
         <div className="filter-menu-list">
-          {allTags.map((tag) => {
-            const checked = selectedTags.includes(tag);
+          {options.map((opt) => {
+            const checked = selected.includes(opt.value);
             return (
-              <label key={tag} className="filter-item">
+              <label key={opt.value} className="filter-item">
                 <input
                   type="checkbox"
                   checked={checked}
-                  onChange={() => onToggleTag(tag)}
+                  onChange={() => onToggle(opt.value)}
                 />
                 <span className="filter-checkbox" aria-hidden="true">
                   {checked && (
@@ -100,20 +103,26 @@ const TagsFilterMenu = ({ allTags, selectedTags, onToggleTag, onClose }) => {
                     </svg>
                   )}
                 </span>
-                <span className="filter-label">#{tag}</span>
+                {opt.color && (
+                  <span
+                    className="filter-dot"
+                    style={{ background: opt.color, boxShadow: `0 0 8px ${opt.color}` }}
+                  />
+                )}
+                <span className="filter-label">{opt.label}</span>
               </label>
             );
           })}
         </div>
       )}
-      {selectedTags.length > 0 && (
+      {selected.length > 0 && (
         <div className="filter-menu-footer">
           <button
             type="button"
             className="filter-clear"
-            onClick={() => selectedTags.forEach((t) => onToggleTag(t))}
+            onClick={() => selected.forEach((v) => onToggle(v))}
           >
-            Clear ({selectedTags.length})
+            Clear ({selected.length})
           </button>
         </div>
       )}
@@ -121,10 +130,17 @@ const TagsFilterMenu = ({ allTags, selectedTags, onToggleTag, onClose }) => {
   );
 };
 
-const TaskTable = ({ tasks, allTags, filters, onToggleTag }) => {
+const TaskTable = ({
+  tasks,
+  allTags,
+  filters,
+  onToggleStatus,
+  onTogglePriority,
+  onToggleTag,
+}) => {
   const [sortBy, setSortBy] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [openFilter, setOpenFilter] = useState(null); // 'status' | 'priority' | 'tag' | null
 
   const handleSort = (key) => {
     if (sortBy !== key) {
@@ -145,7 +161,42 @@ const TaskTable = ({ tasks, allTags, filters, onToggleTag }) => {
     [tasks, sortBy, sortDir]
   );
 
-  const activeTagsCount = filters.tags.length;
+  // Готовим опции для каждого меню
+  const tagOptions = useMemo(
+    () => allTags.map((t) => ({ value: t, label: `#${t}` })),
+    [allTags]
+  );
+
+  const getFilterConfig = (type) => {
+    switch (type) {
+      case 'status':
+        return {
+          title: 'Filter by status',
+          options: STATUSES.map((s) => ({ value: s.id, label: s.title, color: s.color })),
+          selected: filters.statuses,
+          onToggle: onToggleStatus,
+          count: filters.statuses.length,
+        };
+      case 'priority':
+        return {
+          title: 'Filter by priority',
+          options: PRIORITIES.map((p) => ({ value: p.id, label: p.label, color: p.color })),
+          selected: filters.priorities,
+          onToggle: onTogglePriority,
+          count: filters.priorities.length,
+        };
+      case 'tag':
+        return {
+          title: 'Filter by tag',
+          options: tagOptions,
+          selected: filters.tags,
+          onToggle: onToggleTag,
+          count: filters.tags.length,
+        };
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="table-wrap glass">
@@ -154,7 +205,8 @@ const TaskTable = ({ tasks, allTags, filters, onToggleTag }) => {
           <tr>
             {COLUMNS.map((col) => {
               const isActiveSort = sortBy === col.key;
-              const isActiveFilter = col.key === 'tags' && activeTagsCount > 0;
+              const cfg = col.filterable ? getFilterConfig(col.filterable) : null;
+              const isActiveFilter = cfg && cfg.count > 0;
 
               return (
                 <th
@@ -176,24 +228,25 @@ const TaskTable = ({ tasks, allTags, filters, onToggleTag }) => {
                           className={`th-filter ${isActiveFilter ? 'active' : ''}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setFilterOpen((v) => !v);
+                            setOpenFilter((v) =>
+                              v === col.filterable ? null : col.filterable
+                            );
                           }}
-                          title="Filter by tag"
-                          aria-label="Filter by tag"
+                          title={cfg.title}
+                          aria-label={cfg.title}
                         >
                           <FilterIcon />
                           {isActiveFilter && (
-                            <span className="th-filter-badge">
-                              {activeTagsCount}
-                            </span>
+                            <span className="th-filter-badge">{cfg.count}</span>
                           )}
                         </button>
-                        {filterOpen && (
-                          <TagsFilterMenu
-                            allTags={allTags}
-                            selectedTags={filters.tags}
-                            onToggleTag={onToggleTag}
-                            onClose={() => setFilterOpen(false)}
+                        {openFilter === col.filterable && (
+                          <FilterMenu
+                            title={cfg.title}
+                            options={cfg.options}
+                            selected={cfg.selected}
+                            onToggle={cfg.onToggle}
+                            onClose={() => setOpenFilter(null)}
                           />
                         )}
                       </span>

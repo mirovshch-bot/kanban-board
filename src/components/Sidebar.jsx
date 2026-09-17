@@ -1,4 +1,44 @@
-const Sidebar = ({ collapsed, onToggleCollapse, mode, onModeChange }) => {
+import { STATUS_BY_ID, PRIORITY_BY_ID } from '../data';
+
+const Sidebar = ({
+  collapsed,
+  onToggleCollapse,
+  mode,
+  onModeChange,
+  filters,
+  onClearAll,
+  onClearField,
+  onToggleStatus,
+  onTogglePriority,
+  onToggleTag,
+}) => {
+  // Собираем активные фильтры в один список для отображения
+  const activeFilters = [
+    ...filters.statuses.map((s) => ({
+      type: 'statuses',
+      value: s,
+      label: STATUS_BY_ID[s]?.title || s,
+      color: STATUS_BY_ID[s]?.color,
+      onRemove: () => onToggleStatus(s),
+    })),
+    ...filters.priorities.map((p) => ({
+      type: 'priorities',
+      value: p,
+      label: PRIORITY_BY_ID[p]?.label || p,
+      color: PRIORITY_BY_ID[p]?.color,
+      onRemove: () => onTogglePriority(p),
+    })),
+    ...filters.tags.map((t) => ({
+      type: 'tags',
+      value: t,
+      label: `#${t}`,
+      onRemove: () => onToggleTag(t),
+    })),
+  ];
+
+  const hasAnyFilter =
+    activeFilters.length > 0 || filters.search.trim().length > 0;
+
   return (
     <aside className={`sidebar glass ${collapsed ? 'collapsed' : ''}`}>
       <div className="brand">
@@ -56,56 +96,81 @@ const Sidebar = ({ collapsed, onToggleCollapse, mode, onModeChange }) => {
         </button>
       </div>
 
-      <div className="sidebar-section-title">Filters</div>
+      {!collapsed && (
+        <>
+          <div className="sidebar-section-title">
+            Filters
+            {hasAnyFilter && (
+              <button
+                type="button"
+                className="filters-clear-all"
+                onClick={onClearAll}
+              >
+                Clear all
+              </button>
+            )}
+          </div>
 
-      <div className="nav-item">
-        <svg
-          className="icon"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        >
-          <path d="M3 6h18M6 12h12M10 18h4" />
-        </svg>
-        <span className="label">All tasks</span>
-      </div>
+          {!hasAnyFilter && (
+            <div className="filters-empty">
+              No active filters
+            </div>
+          )}
 
-      <div className="nav-item">
-        <svg
-          className="icon"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        >
-          <path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z" />
-        </svg>
-        <span className="label">Priority</span>
-      </div>
+          {filters.search.trim() && (
+            <div className="filter-chip filter-chip-search">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              <span className="filter-chip-label">
+                {filters.search.trim()}
+              </span>
+            </div>
+          )}
 
-      <div className="nav-item">
-        <svg
-          className="icon"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        >
-          <path d="M20.59 13.41L11 3.83A2 2 0 009.59 3H4v5.59A2 2 0 004.59 10l9.58 9.59a2 2 0 002.83 0l3.59-3.59a2 2 0 000-2.83z" />
-          <circle cx="7" cy="7" r="1.2" />
-        </svg>
-        <span className="label">Tags</span>
-      </div>
+          {activeFilters.map((f, i) => (
+            <div className="filter-chip" key={`${f.type}-${f.value}-${i}`}>
+              {f.color && (
+                <span
+                  className="filter-chip-dot"
+                  style={{
+                    background: f.color,
+                    boxShadow: `0 0 8px ${f.color}`,
+                  }}
+                />
+              )}
+              <span className="filter-chip-label">{f.label}</span>
+              <button
+                type="button"
+                className="filter-chip-remove"
+                onClick={f.onRemove}
+                aria-label={`Remove filter ${f.label}`}
+              >
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </>
+      )}
 
       <div className="sidebar-spacer"></div>
 

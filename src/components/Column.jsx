@@ -1,4 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { PRIORITIES, TAGS } from '../data';
 import TaskCard from './TaskCard';
 
@@ -10,6 +15,14 @@ const Column = ({ status, tasks, onAddTask }) => {
   const [tagInput, setTagInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef(null);
+
+  // Делаем колонку droppable — можно дропнуть в пустую колонку
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: status.id,
+    data: { type: 'column', statusId: status.id },
+  });
+
+  const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
 
   useEffect(() => {
     if (isAdding) inputRef.current?.focus();
@@ -30,7 +43,6 @@ const Column = ({ status, tasks, onAddTask }) => {
     setTagInput('');
   };
 
-  // ===== Работа с тегами =====
   const normalizeTag = (raw) => raw.trim().toLowerCase().replace(/^#/, '');
 
   const addTag = (raw) => {
@@ -51,7 +63,6 @@ const Column = ({ status, tasks, onAddTask }) => {
   const handleTagKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      // Если есть подсвеченная подсказка — используем её
       if (showSuggestions && suggestions.length > 0) {
         addTag(suggestions[0]);
       } else {
@@ -59,7 +70,6 @@ const Column = ({ status, tasks, onAddTask }) => {
       }
       setShowSuggestions(false);
     } else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
-      // Удаляем последний тег
       removeTag(tags[tags.length - 1]);
     } else if (e.key === 'Escape') {
       e.preventDefault();
@@ -73,7 +83,6 @@ const Column = ({ status, tasks, onAddTask }) => {
 
   const handleTagChange = (e) => {
     const value = e.target.value;
-    // Если вставили строку с запятыми — превращаем в чипсы
     if (value.includes(',')) {
       const parts = value.split(',');
       parts.slice(0, -1).forEach((p) => addTag(p));
@@ -84,19 +93,16 @@ const Column = ({ status, tasks, onAddTask }) => {
     setShowSuggestions(value.trim().length > 0);
   };
 
-  // Автокомплит: теги из справочника, которые ещё не выбраны и совпадают с вводом
   const suggestions = TAGS.filter(
     (t) =>
       !tags.includes(t) &&
       t.toLowerCase().includes(tagInput.trim().toLowerCase())
   ).slice(0, 5);
 
-  // ===== Submit =====
   const submit = () => {
     const trimmed = title.trim();
     if (!trimmed) return;
 
-    // Если в поле тега остался текст — добавим его тоже
     const finalTags = tagInput.trim()
       ? [...tags, normalizeTag(tagInput)].filter(
           (t, i, arr) => t && arr.indexOf(t) === i
@@ -127,18 +133,23 @@ const Column = ({ status, tasks, onAddTask }) => {
   };
 
   return (
-    <section className="column glass">
+    <section
+      className={`column glass ${isOver ? 'column-over' : ''}`}
+      ref={setDroppableRef}
+    >
       <header className="column-header">
         <span className="column-dot" style={{ color: status.color }}></span>
         <span className="column-title">{status.title}</span>
         <span className="column-count">{tasks.length}</span>
       </header>
 
-      <div className="cards">
-        {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
-      </div>
+      <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+        <div className="cards">
+          {tasks.map((task) => (
+            <TaskCard key={task.id} task={task} />
+          ))}
+        </div>
+      </SortableContext>
 
       {isAdding ? (
         <div className="add-form">
@@ -151,7 +162,6 @@ const Column = ({ status, tasks, onAddTask }) => {
             placeholder="Task title…"
           />
 
-          {/* Поле тегов */}
           <div className="tag-field">
             {tags.map((tag) => (
               <span key={tag} className="tag-chip">
